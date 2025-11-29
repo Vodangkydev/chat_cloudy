@@ -41,11 +41,11 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/video", videoRoutes);
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.use(express.static(path.join(__dirname, "../front-end/dist")));
 
   // Catch-all route for SPA in production (Express 5 / path-to-regexp v6 compatible)
-  app.get("/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../front-end", "dist", "index.html"));
   });
 }
 server.listen(PORT, () => {
