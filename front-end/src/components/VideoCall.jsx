@@ -1,53 +1,67 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";
-
-const ZEGO_APP_ID = Number(import.meta.env.VITE_ZEGO_APP_ID) || 615192757;
-const ZEGO_SERVER_SECRET =
-  import.meta.env.VITE_ZEGO_SERVER_SECRET || "7e6bd06045e034c63da115d3768f515e";
+import { axiosInstance } from "../lib/axios";
 
 const VideoCall = () => {
   const containerRef = useRef(null);
+  const [kitToken, setKitToken] = useState(null);
   const { isCallActive, currentRoomId, endCall } = useVideoCallStore();
   const { authUser } = useAuthStore();
 
   useEffect(() => {
-    if (!isCallActive || !currentRoomId || !authUser || !containerRef.current) {
-      return;
-    }
-
-    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
-      ZEGO_APP_ID,
-      ZEGO_SERVER_SECRET,
-      currentRoomId,
-      authUser._id,
-      authUser.fullName || "Người dùng"
-    );
-
-    const zp = ZegoUIKitPrebuilt.create(kitToken);
-    zp.joinRoom({
-      container: containerRef.current,
-      sharedLinks: [
-        {
-          name: "Liên kết cuộc gọi",
-          url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?roomID=${currentRoomId}`,
-        },
-      ],
-      scenario: {
-        mode: ZegoUIKitPrebuilt.GroupCall,
-      },
-      showPreJoinView: false,
-      onLeaveRoom: () => endCall(),
-    });
-
-    return () => {
-      try {
-        zp.destroy();
-      } catch (error) {
-        console.error("Không thể huỷ phiên Zego:", error);
+    const fetchTokenAndJoin = async () => {
+      if (!isCallActive || !currentRoomId || !authUser || !containerRef.current) {
+        return;
       }
+
+      try {
+        const res = await axiosInstance.post("/video/token", {
+          roomId: currentRoomId,
+          userId: authUser._id,
+          userName: authUser.fullName || "Người dùng",
+        });
+
+        if (!res.data?.token) {
+          throw new Error("Không nhận được token cuộc gọi");
+        }
+
+        setKitToken(res.data.token);
+
+        const zp = ZegoUIKitPrebuilt.create(res.data.token);
+        zp.joinRoom({
+          container: containerRef.current,
+          sharedLinks: [
+            {
+              name: "Liên kết cuộc gọi",
+              url: `${window.location.protocol}//${window.location.host}${window.location.pathname}?roomID=${currentRoomId}`,
+            },
+          ],
+          scenario: {
+            mode: ZegoUIKitPrebuilt.GroupCall,
+          },
+          showPreJoinView: false,
+          onLeaveRoom: () => endCall(),
+        });
+
+        return () => {
+          try {
+            zp.destroy();
+          } catch (error) {
+            console.error("Không thể huỷ phiên Zego:", error);
+          }
+        };
+      } catch (error) {
+        console.error("Không thể lấy token cuộc gọi:", error);
+        endCall();
+      }
+    };
+
+    const cleanup = fetchTokenAndJoin();
+    return () => {
+      if (cleanup && typeof cleanup === "function") cleanup();
     };
   }, [isCallActive, currentRoomId, authUser, endCall]);
 
