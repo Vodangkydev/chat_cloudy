@@ -1,13 +1,11 @@
 import express from "express";
-import { getZegoToken } from "../controllers/video.controller.js";
-import { protectRound } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/token", protectRound, getZegoToken);
+// Placeholder route to keep the video module wired.
+router.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
 export default router;
-
-
-
 
