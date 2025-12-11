@@ -1,7 +1,6 @@
 import Navbar from "./components/Navbar";
 import VideoCall from "./components/VideoCall";
-import IncomingCall from "./components/IncomingCall";
-import Calling from "./components/Calling";
+import CallOverlay from "./components/CallOverlay";
 import HomePage from "./pages/HomePage";
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -11,16 +10,22 @@ import ProfilePage from "./pages/ProfilePage";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
+import { useVideoCallStore } from "./store/useVideoCallStore";
 import { useEffect } from "react";
 
 import { Loader } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-  const {authUser, checkAuth, isCheckingAuth, onlineUsers} = useAuthStore()
+  const {authUser, checkAuth, isCheckingAuth, onlineUsers, socket} = useAuthStore()
   const { theme } = useThemeStore();
+  const { subscribeToSocketEvents } = useVideoCallStore();
   console.log({onlineUsers})
   useEffect(() =>{ checkAuth(); },[checkAuth]);
+  useEffect(() => {
+    const cleanup = subscribeToSocketEvents();
+    return () => cleanup?.();
+  }, [subscribeToSocketEvents, socket]);
   console.log({authUser})
 
   if(isCheckingAuth) return (
@@ -40,8 +45,7 @@ const App = () => {
         <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
       </Routes>
     <VideoCall />
-    <IncomingCall />
-    <Calling />
+    <CallOverlay />
     <Toaster />
    </div> 
   );
