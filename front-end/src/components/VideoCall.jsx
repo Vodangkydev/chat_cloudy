@@ -1,37 +1,44 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
+import { axiosInstance } from "../lib/axios";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";
-import { axiosInstance } from "../lib/axios";
 
 const VideoCall = () => {
   const containerRef = useRef(null);
-  const [kitToken, setKitToken] = useState(null);
   const { isCallActive, currentRoomId, endCall } = useVideoCallStore();
   const { authUser } = useAuthStore();
 
   useEffect(() => {
-    const fetchTokenAndJoin = async () => {
-      if (!isCallActive || !currentRoomId || !authUser || !containerRef.current) {
-        return;
-      }
+    if (!isCallActive || !currentRoomId || !authUser || !containerRef.current) {
+      return;
+    }
 
+    let isMounted = true;
+    let zegoInstance = null;
+
+    const setupCall = async () => {
       try {
-        const res = await axiosInstance.post("/video/token", {
-          roomId: currentRoomId,
-          userId: authUser._id,
-          userName: authUser.fullName || "Người dùng",
-        });
+        const res = await axiosInstance.get("/video/config");
+        const { appId, serverSecret } = res.data || {};
 
-        if (!res.data?.token) {
-          throw new Error("Không nhận được token cuộc gọi");
+        if (!appId || !serverSecret) {
+          throw new Error("Thiếu cấu hình Zego từ máy chủ");
         }
 
-        setKitToken(res.data.token);
+        if (!isMounted) return;
 
-        const zp = ZegoUIKitPrebuilt.create(res.data.token);
-        zp.joinRoom({
+        const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+          Number(appId),
+          serverSecret,
+          currentRoomId,
+          authUser._id,
+          authUser.fullName || "Người dùng"
+        );
+
+        zegoInstance = ZegoUIKitPrebuilt.create(kitToken);
+        zegoInstance.joinRoom({
           container: containerRef.current,
           sharedLinks: [
             {
@@ -45,23 +52,21 @@ const VideoCall = () => {
           showPreJoinView: false,
           onLeaveRoom: () => endCall(),
         });
-
-        return () => {
-          try {
-            zp.destroy();
-          } catch (error) {
-            console.error("Không thể huỷ phiên Zego:", error);
-          }
-        };
       } catch (error) {
-        console.error("Không thể lấy token cuộc gọi:", error);
+        console.error("Không thể khởi tạo cuộc gọi Zego:", error);
         endCall();
       }
     };
 
-    const cleanup = fetchTokenAndJoin();
+    setupCall();
+
     return () => {
-      if (cleanup && typeof cleanup === "function") cleanup();
+      isMounted = false;
+      try {
+        zegoInstance?.destroy();
+      } catch (error) {
+        console.error("Không thể huỷ phiên Zego:", error);
+      }
     };
   }, [isCallActive, currentRoomId, authUser, endCall]);
 
