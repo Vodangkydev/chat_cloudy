@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Unmirror Zego video to avoid mirrored self-view */
+.zego-prebuilt-container video {
+  transform: scaleX(1) !important;
+}
