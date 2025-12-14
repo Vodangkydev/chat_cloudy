@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import { generateToken } from "../lib/utils.js";
 import cloudinary from "../lib/cloudinary.js";
 export const signup = async (req,res) => {
-    const { fullName,email,password } = req.body
+    const { fullName, email,password } = req.body
     try{
             if(!fullName || !email || !password) {
                 return res.status(400).json({message: "Vui lòng điền đầy đủ thông tin"});

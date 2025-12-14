@@ -3,8 +3,8 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "./useAuthStore";
 
 const initialState = {
-  incomingCall: null, // { roomId, callerInfo }
-  outgoingCall: null, // { callee, roomId }
+  incomingCall: null, 
+  outgoingCall: null,
   currentRoomId: null,
   isCallActive: false,
   isConnecting: false,

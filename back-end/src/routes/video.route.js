@@ -1,8 +1,7 @@
+// kết nối video call
 import express from "express";
-
 const router = express.Router();
 
-// Placeholder route to keep the video module wired.
 router.get("/config", (req, res) => {
   res.json({
     appId: process.env.ZEGO_APP_ID,
