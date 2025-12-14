@@ -18,6 +18,16 @@ const Sidebar = () => {
     ? users.filter((user) => onlineUsers.includes(user._id))
     : users;
 
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    const aIsOnline = onlineUsers.includes(a._id);
+    const bIsOnline = onlineUsers.includes(b._id);
+ 
+    if (aIsOnline && !bIsOnline) return -1;
+    if (!aIsOnline && bIsOnline) return 1;
+ 
+    return (a.fullName || a.email || "").localeCompare(b.fullName || b.email || "");
+  });
+
   if (isUsersLoading) return < SidebarStructur />;
 
   return (
@@ -43,7 +53,7 @@ const Sidebar = () => {
       </div>
 
       <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
+        {sortedUsers.map((user) => (
           <button
             key={user._id}
             onClick={() => setSelectedUser(user)}
@@ -77,7 +87,7 @@ const Sidebar = () => {
           </button>
         ))}
 
-        {filteredUsers.length === 0 && (
+        {sortedUsers.length === 0 && (
           <div className="text-center text-zinc-500 py-4">Không có người nào hoạt động</div>
         )}
       </div>
