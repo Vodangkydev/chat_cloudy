@@ -1,7 +1,8 @@
 # 💬 Chat App
 
 Ứng dụng chat real-time với video call được xây dựng bằng React và Node.js.
-
+<img width="1920" height="917" alt="Image" src="https://github.com/user-attachments/assets/7bc37c7c-81c8-4fc0-956e-f6faf4cc3602" />
+<img width="1912" height="916" alt="Image" src="https://github.com/user-attachments/assets/17cf3a4c-8fb7-47f5-9865-d53b404c9af6" />
 ## ✨ Tính năng
 
 - 🔐 **Xác thực người dùng**: Đăng ký và đăng nhập với JWT
