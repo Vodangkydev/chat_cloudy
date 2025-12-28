@@ -34,8 +34,7 @@ const ProfilePage = () => {
   };
 
   const handleCancel = () => {
-    setFullName(authUser?.fullName || "");
-    setSelectedImg(null);
+    navigate("/");
   };
 
   return (
