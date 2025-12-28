@@ -75,21 +75,34 @@ export const logout = (req,res) => {
         return res.status(500).json({message: "lỗi máy chủ - nội bộ"});
     }
 };
-export const updateProfile = async (req,res) => {
-    try { 
-        const {profilePic} = req.body
-      const userId = req.user._id
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullName, profilePic } = req.body;
+    const userId = req.user._id;
+    const updateData = {};
 
-      if (!profilePic){
-        return res.status(400).json({message: "Ảnh đại diện không được để trống"});
-      }
-      const uploadResponse = await cloudinary.uploader.upload(profilePic)
-      const updateUser= await User.findByIdAndUpdate(userId, {profilePic:uploadResponse.secure_url}, {new:true})
-     res.status(200).json(updateUser)
-    } catch (error) {
-        console.log("lỗi update", error)
-        res.status(500).json({message:" lỗi server"});
+    // Nếu truyền fullName thì update
+    if (typeof fullName === "string" && fullName.trim() !== "") {
+      updateData.fullName = fullName.trim();
     }
+
+    // Nếu truyền profilePic dạng base64 thì update ảnh
+    if (profilePic && profilePic.startsWith("data:image")) {
+      const uploadResponse = await cloudinary.uploader.upload(profilePic);
+      updateData.profilePic = uploadResponse.secure_url;
+    }
+
+    // Nếu không có trường nào cần update, trả lỗi
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "Không có dữ liệu cập nhật" });
+    }
+
+    const updateUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    res.status(200).json(updateUser);
+  } catch (error) {
+    console.log("lỗi update", error);
+    res.status(500).json({ message: "lỗi server" });
+  }
 };
 export const checkAuth = (req,res) => {
 try{
